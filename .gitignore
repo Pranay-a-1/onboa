@@ -140,3 +140,8 @@ vite.config.ts.timestamp-*
 
 
 .vscode/
+
+
+docs/
+docs/task.md
+.agents/

@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: PranayBankOnboarding
+
+  # ─── Database ───────────────────────────────────────────────────────────────
+  datasource:
+    url: ${NEON_DB_URL:jdbc:postgresql://localhost:5432/pranaybank}
+    username: ${NEON_DB_USERNAME:postgres}
+    password: ${NEON_DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update # auto-creates/updates tables from entities
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  # ─── OAuth2 Resource Server (Auth0 JWT validation) ──────────────────────────
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${AUTH0_ISSUER_URI:https://YOUR_AUTH0_DOMAIN.auth0.com/}
+
+# ─── Server ─────────────────────────────────────────────────────────────────
+server:
+  port: 8080
+
+# ─── Application-level custom properties ────────────────────────────────────
+pranaybank:
+  auth0:
+    audience: ${AUTH0_AUDIENCE:https://pranaybank-api}
+  cors:
+    allowed-origins:
+      - http://localhost:3000
+      - http://localhost:3001
+      - http://localhost:3002
+      - ${SHELL_APP_URL:https://pranaybank.vercel.app}
