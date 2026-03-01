@@ -34,8 +34,4 @@ pranaybank:
   auth0:
     audience: ${AUTH0_AUDIENCE:https://pranaybank-api}
   cors:
-    allowed-origins:
-      - http://localhost:3000
-      - http://localhost:3001
-      - http://localhost:3002
-      - ${SHELL_APP_URL:https://pranaybank.vercel.app}
+    allowed-origins: http://localhost:3000,http://localhost:3001,http://localhost:3002,${SHELL_APP_URL:https://pranaybank.vercel.app}

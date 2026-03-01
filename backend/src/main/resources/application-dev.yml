@@ -1,0 +1,50 @@
+# ─── DEV PROFILE — zero external dependencies ────────────────────────────────
+# Replaces Neon (PostgreSQL) with H2 in-memory and bypasses Auth0 JWKS fetch.
+#
+# Run with:
+#   ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+
+spring:
+  # ── Swap Neon for H2 in-memory DB ──────────────────────────────────────────
+  datasource:
+    url: jdbc:h2:mem:pranaybank;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop # builds schema fresh on start, drops on stop
+    database-platform: org.hibernate.dialect.H2Dialect
+    show-sql: true
+    properties:
+      hibernate:
+        # Override the PostgreSQL dialect from base application.yml
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+
+  # ── H2 web console — inspect data at http://localhost:8080/h2-console ───────
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  # ── Override Auth0 issuer so Spring does NOT try to fetch JWKS on startup ──
+  # With a localhost URL, the JwtDecoder bean initialises fine but won't be
+  # able to validate real tokens (acceptable since there's no frontend yet).
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Keep issuer-uri so the @Value injection in SecurityConfig doesn't fail
+          issuer-uri: http://localhost/dev-issuer
+          # jwk-set-uri being set triggers dev mode in SecurityConfig:
+          # NimbusJwtDecoder.withJwkSetUri() is used instead of fromOidcIssuerLocation()
+          # — no outbound HTTP call at startup, app boots without Auth0
+          jwk-set-uri: http://localhost/dev-jwks
+
+pranaybank:
+  auth0:
+    audience: http://localhost/dev-audience
+  cors:
+    allowed-origins: http://localhost:3000,http://localhost:3001,http://localhost:3002
