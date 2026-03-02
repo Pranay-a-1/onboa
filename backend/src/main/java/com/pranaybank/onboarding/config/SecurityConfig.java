@@ -95,6 +95,7 @@ public class SecurityConfig {
     // ─────────────────────────────────────────────────────────────────────────
     @Bean
     @Order(2)
+    @Profile("!dev")
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 // ── CSRF: disabled — this is a stateless REST API, no browser sessions ──
@@ -140,6 +141,7 @@ public class SecurityConfig {
      * DelegatingOAuth2TokenValidator chains multiple validators; ALL must pass.
      */
     @Bean
+    @Profile("!dev")
     public JwtDecoder jwtDecoder() {
         NimbusJwtDecoder decoder;
 
@@ -178,6 +180,7 @@ public class SecurityConfig {
      * so hasRole("ADMIN") resolves correctly to the authority "ROLE_ADMIN".
      */
     @Bean
+    @Profile("!dev")
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
 
