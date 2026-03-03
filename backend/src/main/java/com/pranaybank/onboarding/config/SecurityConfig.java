@@ -100,6 +100,8 @@ public class SecurityConfig {
         http
                 // ── CSRF: disabled — this is a stateless REST API, no browser sessions ──
                 .csrf(csrf -> csrf.disable())
+                // ── FrameOptions: disabled for H2 console ──
+                .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()))
 
                 // ── CORS: delegate to the corsConfigurationSource bean below ──────────
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -109,6 +111,8 @@ public class SecurityConfig {
 
                 // ── Path-based Authorization Rules ────────────────────────────────────
                 .authorizeHttpRequests(auth -> auth
+                        // Allow H2 console access without authentication
+                        .requestMatchers("/h2-console/**").permitAll()
                         // Admin-only area — requires the ADMIN role (mapped from JWT)
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         // Merchant-facing endpoints — requires USER role

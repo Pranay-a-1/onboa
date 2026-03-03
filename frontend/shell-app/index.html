@@ -2,22 +2,53 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+
+    <!--
+      Viewport meta tag: ensures the layout scales correctly on mobile devices.
+      'width=device-width' = use the device's screen width as the viewport width
+      'initial-scale=1.0' = no zoom on load
+    -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PranayBank — Merchant Onboarding Portal</title>
+
+    <!-- SEO: describes the page for search engines and link previews -->
     <meta
       name="description"
-      content="PranayBank merchant onboarding portal — apply for payment processing in minutes."
+      content="PranayBank Merchant Onboarding Portal — Apply for a merchant account securely and track your application status."
     />
+
+    <!--
+      Inter font from Google Fonts.
+      Inter is a variable font family designed specifically for screen readability.
+      We load weights 300–700 to cover: body text, labels, headings, and bold CTAs.
+      'display=swap' prevents invisible text during font load (uses fallback font first,
+      then swaps in Inter once downloaded).
+    -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Favicon: using the existing vite.svg placeholder for now -->
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+
+    <!-- Page title — shown in browser tabs and bookmarks -->
+    <title>PranayBank | Merchant Onboarding</title>
   </head>
   <body>
+    <!--
+      The #root div is the single DOM node React mounts into.
+      createRoot(document.getElementById('root')) in main.jsx targets this.
+      It must be the only direct child of <body> to avoid hydration mismatches.
+    -->
     <div id="root"></div>
+
+    <!--
+      Vite entry point: this script tag is the only one you need to declare.
+      Vite's dev server reads it, applies HMR, and in production compiles
+      main.jsx + all its imports into hashed, cache-busted bundles automatically.
+    -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
