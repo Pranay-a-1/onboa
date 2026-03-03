@@ -212,8 +212,8 @@
 
 - Initialize Vite + React 19 project
 - Configure `@originjs/vite-plugin-federation` as host, consuming remotes: `onboarding@<URL>/assets/remoteEntry.js`, `dashboard@<URL>/assets/remoteEntry.js`
-- Shared deps: `react`, `react-dom`, `react-router-dom`, `@auth0/auth0-react`
-- Set up Auth0Provider, MUI ThemeProvider (dark theme), BrowserRouter in `main.jsx`
+- Shared deps: `react`, `react-dom`, `react-router-dom`, `@auth0/auth0-react`, `@tanstack/react-query`
+- Set up Auth0Provider, QueryClientProvider, MUI ThemeProvider (dark theme), BrowserRouter in `main.jsx`
 - Environment variables: `VITE_AUTH0_DOMAIN`, `VITE_AUTH0_CLIENT_ID`, `VITE_AUTH0_AUDIENCE`, `VITE_API_URL`
 
 **Acceptance Criteria**:
@@ -223,6 +223,7 @@
 - [ ] `npm run build` produces clean build output
 - [ ] Module Federation config lists both remotes
 - [ ] Auth0Provider wraps the entire app with env-based config
+- [ ] QueryClientProvider wraps the host app and is initialized once in `main.jsx`
 
 ---
 
@@ -302,8 +303,9 @@
 
 - Initialize Vite + React 19 project
 - Module Federation remote config: exposes `./OnboardingApp`
-- Shared deps: `react`, `react-dom`, `react-router-dom`, `@auth0/auth0-react`
+- Shared deps: `react`, `react-dom`, `react-router-dom`, `@auth0/auth0-react`, `@tanstack/react-query`
 - API service: authenticated Axios instance using `getAccessTokenSilently`, methods for `create`, `getMine`, `getById`, `saveStep`, `submit`
+- Set up QueryClientProvider in `main.jsx` with shared query keys for application reads/writes
 
 **Acceptance Criteria**:
 
@@ -311,6 +313,7 @@
 - [ ] `npm run build` generates `remoteEntry.js` in output
 - [ ] API service creates Axios instance with Bearer token interceptor
 - [ ] All 5 application API methods match the API contract
+- [ ] QueryClientProvider is configured in `main.jsx` with onboarding application query keys
 
 ---
 
@@ -321,21 +324,32 @@
 **Files**:
 
 - `frontend/onboarding-mfe/src/OnboardingApp.jsx`
+- `frontend/onboarding-mfe/src/hooks/useApplication.js`
+- `frontend/onboarding-mfe/src/state/ApplicationProvider.jsx`
+- `frontend/onboarding-mfe/src/state/applicationReducer.js`
 
 **Work**:
 
-- On mount: sync user (`POST /users/sync`), then fetch existing application (`GET /applications/me`)
-- State: `application`, `loading`, `error`
-- Handler functions: `handleCreateApplication`, `handleStepSave`, `handleSubmit`
-- Routing logic: show `OnboardingStepper` if no app / `DRAFT` / `REJECTED`, show `ClientPortal` if `SUBMITTED` / `UNDER_REVIEW` / `APPROVED`
+- On mount: sync user (`POST /users/sync`) via mutation flow, then load existing application (`GET /applications/me`) via query
+- State architecture (hybrid):
+  - Server state: TanStack Query (`useQuery`/`useMutation`) for `application`, network loading/error, retries, and cache invalidation
+  - UI workflow state: React Context + `useReducer` for `activeStep`, local draft-edit flags, and view-specific UI errors
+- Handler contracts in `useApplication`: `createApplication`, `saveStep`, `submitApplication`, and `refetchApplication` (hook-level helper only)
+- Query invalidation strategy: successful create/save/submit invalidates application query keys instead of callback-based child refresh
+- Routing logic in `OnboardingApp`: show `OnboardingStepper` if no app / `DRAFT` / `REJECTED`, show `ClientPortal` if `SUBMITTED` / `UNDER_REVIEW` / `APPROVED`
+- Component responsibility split:
+  - `OnboardingApp`: layout + status-based view routing only
+  - `ApplicationProvider`/`useApplication`: API orchestration and state transitions
 
 **Acceptance Criteria**:
 
 - [ ] Component syncs user on first load
-- [ ] Shows loading spinner while fetching
+- [ ] Shows loading spinner while initial query/mutation bootstrap runs
 - [ ] Routes to stepper for DRAFT/REJECTED/new applications
 - [ ] Routes to ClientPortal for SUBMITTED/UNDER_REVIEW/APPROVED
-- [ ] Passes `onSaveStep`, `onSubmit`, `onRefresh` callbacks to children
+- [ ] `createApplication`, `saveStep`, `submitApplication` are exposed through `useApplication` (not passed through deep prop chains)
+- [ ] Successful create/save/submit invalidates application query keys and rehydrates latest server state
+- [ ] `OnboardingStepper` and step components consume state/actions from provider hook without callback-based `onRefresh`
 
 ---
 
@@ -355,6 +369,7 @@
 - **BusinessAddressStep**: Street, Suite/Unit, City, State dropdown, ZIP (5 or 9 digit), Phone (US format), Email, Website URL
 - **AuthRepStep**: Full Name, Title, SSN last 4 (masked), DOB (18+ validation), Address, Phone, Email
 - Each step: controlled inputs, field-level validation, pre-populated from existing application data
+- Steps consume persisted application data and save actions from `useApplication` directly (no intermediate prop-drilling contract)
 
 **Acceptance Criteria**:
 
@@ -365,6 +380,7 @@
 - [ ] DOB validates age ≥ 18
 - [ ] SSN last 4 uses masked input
 - [ ] Fields pre-populate when resuming a draft
+- [ ] Step save actions call provider hook mutations and trigger query invalidation/reload
 
 ---
 
@@ -408,6 +424,7 @@
 
 - **ReviewStep**: Read-only display of all Steps 1–5 data in sections, "Edit" links per section (navigates to that step), Terms & Conditions checkbox, E-Signature checkbox, Submit button (disabled until both checked)
 - **OnboardingStepper**: MUI Stepper (horizontal, 6 steps with icons/labels), active step highlight + completed checkmarks, Next/Back/Save Draft buttons, auto-save on step navigation (PRD: FORM-01), step rendering switch, error/success snackbar
+- `OnboardingStepper` consumes `activeStep` and actions from reducer-backed provider; it does not act as a callback transport layer
 - Styles: Glow connector between steps, glass-effect paper containers
 
 **Acceptance Criteria**:
@@ -421,6 +438,7 @@
 - [ ] Each section has an "Edit" link that navigates to the corresponding step
 - [ ] Submit requires both T&C and E-Signature checkboxes checked
 - [ ] Submit transitions application status from DRAFT to SUBMITTED
+- [ ] Submit uses provider hook mutation and invalidates application query to render post-submit portal state
 
 ---
 
@@ -439,6 +457,7 @@
 - **Merchant Info Card** (approved only): Merchant ID badge (`PB-XXXXXXXX`), approval date, account status
 - **Rejection View**: Show admin notes/rejection reason, "Edit & Resubmit" button (navigates to stepper)
 - **Draft View**: "Continue Application" CTA
+- `ClientPortal` reads state/actions from `useApplication`; rejected-to-draft re-entry is driven by provider actions and invalidated query data
 
 **Acceptance Criteria**:
 
@@ -448,6 +467,7 @@
 - [ ] All submitted data is displayed read-only in expandable accordion sections
 - [ ] "Edit & Resubmit" navigates to stepper with data pre-loaded
 - [ ] "Continue Application" CTA appears for DRAFT status
+- [ ] Re-entry/resume state uses reducer-managed step pointer plus latest server application snapshot from query cache
 
 ---
 
@@ -469,7 +489,9 @@
 
 - Initialize Vite + React 19 project
 - Module Federation remote config: exposes `./DashboardApp`
+- Shared deps: `react`, `react-dom`, `react-router-dom`, `@auth0/auth0-react`, `@tanstack/react-query`
 - API service: `getApplications(status?)`, `getApplication(id)`, `updateStatus(id, status, notes)`, `getStats()`
+- Set up QueryClientProvider in `main.jsx` with dashboard query keys for stats/list/detail
 
 **Acceptance Criteria**:
 
@@ -477,6 +499,7 @@
 - [ ] `npm run build` generates `remoteEntry.js`
 - [ ] API service methods match admin API contract
 - [ ] Authenticated Axios instance with Bearer token interceptor
+- [ ] QueryClientProvider is configured in `main.jsx` with dashboard stats/list/detail query keys
 
 ---
 
@@ -543,7 +566,8 @@
 
 - **ApplicationDetail**: Full submitted data in accordion sections (all 5 steps), status badge, submitted/updated dates, admin notes (if any)
 - **Approve/Reject**: Action buttons at bottom (only for SUBMITTED/UNDER_REVIEW), confirmation dialog with optional admin notes text field
-- **DashboardApp**: Root component managing state: loads stats + list on mount, handles view/detail navigation, handles status update + refresh
+- **DashboardApp**: Root component managing local UI mode state (list/detail/dialog), while TanStack Query manages stats/list/detail server state and mutations
+- Status updates use mutation + query invalidation for stats/list/detail refresh (no manual callback refresh chains)
 - Dashboard styles
 
 **Acceptance Criteria**:
@@ -554,6 +578,7 @@
 - [ ] Clicking Approve/Reject opens confirmation dialog
 - [ ] Dialog allows optional admin notes
 - [ ] After confirm, status is updated via API and list refreshes
+- [ ] After status update, related query keys (stats/list/detail) are invalidated and UI reflects the latest server state
 - [ ] Approved application shows generated Merchant ID
 - [ ] Console log simulates email notification on status change (PRD: DASH-07)
 

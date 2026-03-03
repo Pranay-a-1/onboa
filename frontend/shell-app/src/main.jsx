@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { Auth0Provider } from '@auth0/auth0-react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material'
 import './index.css'
 import App from './App.jsx'
@@ -60,24 +61,40 @@ const auth0Config = {
   },
 }
 
+// ─── TanStack Query Client ───────────────────────────────────────────────────
+// Central query client for shell and remote MFEs.
+// Defaults reduce noisy refetch behavior while keeping retry resilience.
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+})
+
 // ─── Application Entry Point ──────────────────────────────────────────────────
 // Provider nesting order matters:
 //   1. Auth0Provider must be outermost (needs to intercept redirect callbacks
 //      before the router renders anything)
-//   2. ThemeProvider wraps everything so MUI theme is globally available
-//   3. CssBaseline resets browser defaults (margins, box-sizing, font) to
+//   2. QueryClientProvider provides shared server-state cache/mutations
+//   3. ThemeProvider wraps everything so MUI theme is globally available
+//   4. CssBaseline resets browser defaults (margins, box-sizing, font) to
 //      match the dark theme background colour
-//   4. BrowserRouter provides routing context for react-router-dom
-//   5. App renders the actual route tree
+//   5. BrowserRouter provides routing context for react-router-dom
+//   6. App renders the actual route tree
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Auth0Provider {...auth0Config}>
-      <ThemeProvider theme={darkTheme}>
-        <CssBaseline />
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider theme={darkTheme}>
+          <CssBaseline />
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </ThemeProvider>
+      </QueryClientProvider>
     </Auth0Provider>
   </StrictMode>,
 )

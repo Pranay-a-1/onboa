@@ -36,7 +36,7 @@ Key files:
 Vite + React 18 host application. Module Federation host consuming two remotes.
 
 - **`vite.config.js`** — Module Federation host config with shared deps
-- **`src/main.jsx`** — Auth0Provider wrapper, router setup
+- **`src/main.jsx`** — Auth0Provider + QueryClientProvider wrappers, router setup
 - **`src/App.jsx`** — Layout: Navbar + Sidebar + Content area
 - **`src/components/Navbar.jsx`** — Logo, nav links, user avatar, logout
 - **`src/components/Sidebar.jsx`** — Admin-only sidebar navigation
@@ -57,7 +57,9 @@ Vite + React 18 remote. Exposes `./OnboardingApp` component.
 - **`src/components/steps/`** — 6 step form components (BusinessInfoStep, BusinessAddressStep, AuthRepStep, ProcessingInfoStep, BankAccountStep, ReviewStep)
 - **`src/components/ClientPortal.jsx`** — Status tracker, application summary, merchant info
 - **`src/services/api.js`** — Axios calls for application CRUD
-- **`src/hooks/useApplication.js`** — Custom hook for application state management
+- **`src/hooks/useApplication.js`** — Custom hook that combines TanStack Query server-state logic with reducer-driven workflow actions
+- **`src/state/ApplicationProvider.jsx`** — Context provider for onboarding workflow state and actions
+- **`src/state/applicationReducer.js`** — Reducer for `activeStep`, local draft UI flags, and view-level UI state
 
 ---
 
@@ -73,6 +75,18 @@ Vite + React 18 remote. Exposes `./DashboardApp` component.
 - **`src/components/ApplicationDetail.jsx`** — Full application detail view
 - **`src/components/ApproveRejectDialog.jsx`** — Modal for admin action with notes
 - **`src/services/api.js`** — Axios calls for admin endpoints
+- **State pattern parity** — use TanStack Query for stats/list/detail server state and mutation-driven invalidation; keep local component state for view mode/dialog selection only
+
+---
+
+## State Management Strategy
+
+- **Server state ownership**: TanStack Query (`useQuery`/`useMutation`) manages remote data fetching, caching, retries, loading/error states, and invalidation across shell/onboarding/dashboard MFEs.
+- **UI workflow ownership**: React Context + `useReducer` manages onboarding-only workflow UI state (step navigation pointer, local draft-edit indicators, UI mode).
+- **Mutation success policy**:
+  - Onboarding create/save/submit invalidates onboarding application query keys.
+  - Dashboard approve/reject invalidates dashboard stats/list/detail query keys.
+- **Refresh contract**: No callback-based `onRefresh` prop contract between deep child components; freshness is driven by query invalidation and hook-driven refetch.
 
 ---
 

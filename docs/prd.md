@@ -214,7 +214,7 @@ stateDiagram-v2
 | ---------------------- | --------------------------------------------------------------- |
 | **Frontend Framework** | React 18                                                        |
 | **Bundler**            | Vite 5 with `@originjs/vite-plugin-federation`                  |
-| **State Management**   | React Context + `useReducer` (lightweight, no Redux needed)     |
+| **State Management**   | TanStack Query (server state) + React Context + `useReducer` (workflow UI state) |
 | **HTTP Client**        | Axios                                                           |
 | **UI Components**      | MUI (Material UI) v5 — for stepper, tables, cards, forms        |
 | **Auth (Frontend)**    | `@auth0/auth0-react` SDK                                        |
@@ -236,8 +236,13 @@ stateDiagram-v2
 **Module Federation Config**:
 
 - Shell app dynamically loads `onboarding-mfe` and `dashboard-mfe` at runtime
-- Shared dependencies: `react`, `react-dom`, `react-router-dom`, `@auth0/auth0-react`
+- Shared dependencies: `react`, `react-dom`, `react-router-dom`, `@auth0/auth0-react`, `@tanstack/react-query`
 - Each MFE exposes a root component (e.g., `./OnboardingApp`, `./DashboardApp`)
+
+**State Synchronization Contract**:
+
+- Server refresh behavior uses TanStack Query invalidation for onboarding/dashboard data updates.
+- Callback-based deep refresh props (for example, `onRefresh`) are out of scope for the production architecture.
 
 ---
 
