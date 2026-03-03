@@ -543,12 +543,12 @@
 
 **Acceptance Criteria**:
 
-- [ ] Table displays all applications with correct columns
-- [ ] Status filter dropdown filters the list (calls API with `?status=` param)
-- [ ] Status column shows colored Chip/Badge for each status
-- [ ] "View" button triggers `onViewDetail(appId)` callback
-- [ ] Empty state shown when no applications match filter
-- [ ] Table handles loading state gracefully
+- [x] Table displays all applications with correct columns
+- [x] Status filter dropdown filters the list (calls API with `?status=` param)
+- [x] Status column shows colored Chip/Badge for each status
+- [x] "View" button triggers `onViewDetail(appId)` callback
+- [x] Empty state shown when no applications match filter
+- [x] Table handles loading state gracefully
 
 ---
 
@@ -572,15 +572,15 @@
 
 **Acceptance Criteria**:
 
-- [ ] Detail view shows all application data from 5 steps in accordion layout
-- [ ] "Back to List" button returns to the application list
-- [ ] Approve/Reject buttons only visible for SUBMITTED/UNDER_REVIEW statuses
-- [ ] Clicking Approve/Reject opens confirmation dialog
-- [ ] Dialog allows optional admin notes
-- [ ] After confirm, status is updated via API and list refreshes
-- [ ] After status update, related query keys (stats/list/detail) are invalidated and UI reflects the latest server state
-- [ ] Approved application shows generated Merchant ID
-- [ ] Console log simulates email notification on status change (PRD: DASH-07)
+- [x] Detail view shows all application data from 5 steps in accordion layout
+- [x] "Back to List" button returns to the application list
+- [x] Approve/Reject buttons only visible for SUBMITTED/UNDER_REVIEW statuses
+- [x] Clicking Approve/Reject opens confirmation dialog
+- [x] Dialog allows optional admin notes
+- [x] After confirm, status is updated via API and list refreshes
+- [x] After status update, related query keys (stats/list/detail) are invalidated and UI reflects the latest server state
+- [x] Approved application shows generated Merchant ID
+- [x] Console log simulates email notification on status change (PRD: DASH-07)
 
 ---
 

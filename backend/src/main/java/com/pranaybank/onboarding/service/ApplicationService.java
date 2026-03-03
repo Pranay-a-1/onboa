@@ -146,7 +146,7 @@ public class ApplicationService {
      * @throws SecurityException        if the application does not belong to
      *                                  auth0Id
      * @throws IllegalArgumentException if step is out of range 1–5
-     * @throws IllegalStateException    if the application is not in DRAFT status
+     * @throws IllegalStateException    if the application is not editable
      */
     @Transactional
     public OnboardingApplication saveStepData(UUID appId, int step, Map<String, Object> data, String auth0Id) {
@@ -154,9 +154,15 @@ public class ApplicationService {
 
         verifyOwnership(app, auth0Id);
 
-        if (app.getStatus() != ApplicationStatus.DRAFT) {
+        if (app.getStatus() != ApplicationStatus.DRAFT && app.getStatus() != ApplicationStatus.REJECTED) {
             throw new IllegalStateException(
-                    "Cannot save step data: application is not in DRAFT status (current: " + app.getStatus() + ")");
+                    "Cannot save step data: application must be editable (DRAFT or REJECTED) (current: "
+                            + app.getStatus() + ")");
+        }
+
+        // First merchant edit after admin rejection re-opens the application.
+        if (app.getStatus() == ApplicationStatus.REJECTED) {
+            app.setStatus(ApplicationStatus.DRAFT);
         }
 
         switch (step) {
