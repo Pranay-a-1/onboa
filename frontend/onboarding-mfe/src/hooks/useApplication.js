@@ -17,14 +17,13 @@ const STEP_INDEX_BY_STATUS = {
   SUBMITTED: 5,
   UNDER_REVIEW: 5,
   APPROVED: 5,
-  REJECTED: 0,
+  REJECTED: 5,
 }
 
 export function useApplicationController({ uiState, dispatch }) {
   const queryClient = useQueryClient()
   const { isAuthenticated, user, getAccessTokenSilently } = useAuth0()
   const [syncAttempt, setSyncAttempt] = useState(0)
-  const [isUserSynced, setIsUserSynced] = useState(false)
   const hasStartedSyncRef = useRef(false)
 
   const api = useMemo(() => {
@@ -34,7 +33,13 @@ export function useApplicationController({ uiState, dispatch }) {
     return createApplicationApi(getAccessTokenSilently)
   }, [getAccessTokenSilently, isAuthenticated])
 
-  const syncUserMutation = useMutation({
+  const {
+    mutateAsync: syncUserMutateAsync,
+    reset: resetSyncUserMutation,
+    isSuccess: isSyncUserSuccess,
+    isPending: isSyncUserPending,
+    error: syncUserError,
+  } = useMutation({
     mutationFn: async () => {
       if (!api) {
         throw new Error('Authentication is required before syncing user.')
@@ -42,11 +47,12 @@ export function useApplicationController({ uiState, dispatch }) {
       return api.syncUser()
     },
   })
-  const syncUser = syncUserMutation.mutateAsync
+  const isUserSynced =
+    isSyncUserSuccess ||
+    syncUserError?.response?.status === 409
 
   useEffect(() => {
     if (!isAuthenticated || !api) {
-      setIsUserSynced(false)
       hasStartedSyncRef.current = false
       return
     }
@@ -57,19 +63,13 @@ export function useApplicationController({ uiState, dispatch }) {
     let cancelled = false
     hasStartedSyncRef.current = true
     dispatch({ type: APPLICATION_ACTIONS.CLEAR_BOOTSTRAP_ERROR })
-    setIsUserSynced(false)
 
-    syncUser()
-      .then(() => {
-        if (!cancelled) {
-          setIsUserSynced(true)
-        }
-      })
+    syncUserMutateAsync()
+      .then(() => {})
       .catch((error) => {
         if (!cancelled) {
           if (error?.response?.status === 409) {
             // Existing user conflicts are non-fatal for bootstrap.
-            setIsUserSynced(true)
             dispatch({ type: APPLICATION_ACTIONS.CLEAR_BOOTSTRAP_ERROR })
             return
           }
@@ -78,7 +78,6 @@ export function useApplicationController({ uiState, dispatch }) {
             payload: error?.message ?? 'User sync failed.',
           })
           hasStartedSyncRef.current = false
-          setIsUserSynced(false)
         }
       })
 
@@ -86,7 +85,7 @@ export function useApplicationController({ uiState, dispatch }) {
       cancelled = true
       hasStartedSyncRef.current = false
     }
-  }, [api, dispatch, isAuthenticated, syncAttempt, syncUser])
+  }, [api, dispatch, isAuthenticated, syncAttempt, syncUserMutateAsync])
 
   const applicationQuery = useQuery({
     queryKey: APPLICATION_QUERY_KEY_ME,
@@ -168,11 +167,10 @@ export function useApplicationController({ uiState, dispatch }) {
 
   const retryBootstrap = useCallback(() => {
     dispatch({ type: APPLICATION_ACTIONS.CLEAR_BOOTSTRAP_ERROR })
-    syncUserMutation.reset()
+    resetSyncUserMutation()
     hasStartedSyncRef.current = false
-    setIsUserSynced(false)
     setSyncAttempt((current) => current + 1)
-  }, [dispatch, syncUserMutation])
+  }, [dispatch, resetSyncUserMutation])
 
   const createApplication = useCallback(async () => {
     const created = await createMutation.mutateAsync()
@@ -242,7 +240,7 @@ export function useApplicationController({ uiState, dispatch }) {
     bootstrapError: uiState.bootstrapError,
     isBootstrapping:
       isAuthenticated &&
-      (syncUserMutation.isPending || (!isUserSynced && !uiState.bootstrapError) || applicationQuery.isLoading),
+      (isSyncUserPending || (!isUserSynced && !uiState.bootstrapError) || applicationQuery.isLoading),
     isApplicationLoading: applicationQuery.isLoading,
     isCreating: createMutation.isPending,
     isSaving: saveStepMutation.isPending,

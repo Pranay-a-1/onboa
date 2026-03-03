@@ -6,11 +6,17 @@ import { useApplication } from './hooks/useApplication'
 import './index.css'
 import ApplicationProvider from './state/ApplicationProvider'
 
-const STEPPER_STATUSES = new Set(['DRAFT', 'REJECTED'])
+const STEPPER_STATUSES = new Set(['DRAFT'])
 const PORTAL_STATUSES = new Set(['SUBMITTED', 'UNDER_REVIEW', 'APPROVED'])
 
 function OnboardingAppContent() {
-  const { applicationStatus, isBootstrapping, bootstrapError, retryBootstrap } =
+  const {
+    applicationStatus,
+    activeStep,
+    isBootstrapping,
+    bootstrapError,
+    retryBootstrap,
+  } =
     useApplication()
 
   if (isBootstrapping) {
@@ -40,9 +46,12 @@ function OnboardingAppContent() {
     )
   }
 
+  const isRejected = applicationStatus === 'REJECTED'
   const shouldShowStepper =
-    applicationStatus == null || STEPPER_STATUSES.has(applicationStatus)
-  const shouldShowPortal = PORTAL_STATUSES.has(applicationStatus)
+    applicationStatus == null ||
+    STEPPER_STATUSES.has(applicationStatus) ||
+    (isRejected && activeStep < 5)
+  const shouldShowPortal = PORTAL_STATUSES.has(applicationStatus) || (isRejected && activeStep >= 5)
 
   return (
     <main className="app-shell">
