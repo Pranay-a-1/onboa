@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useApplication } from '../../hooks/useApplication'
+import { autofillBusinessAddress } from '../../utils/demoAutofill'
 
 const US_STATES = [
   'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
@@ -94,7 +95,7 @@ function validateForm(values) {
   }
 }
 
-function BusinessAddressStep() {
+function BusinessAddressStep({ registerStepAction = null }) {
   const {
     application,
     createApplication,
@@ -179,64 +180,97 @@ function BusinessAddressStep() {
     }))
   }
 
+  const submitStep = useCallback(
+    async ({ mode = 'strict', autofill = false } = {}) => {
+      const nextValues = autofill ? autofillBusinessAddress(formValues) : formValues
+      if (autofill) {
+        setFormValues(nextValues)
+      }
+
+      const nextTouched = {
+        streetAddress: true,
+        city: true,
+        state: true,
+        zipCode: true,
+        phone: true,
+        email: true,
+        websiteUrl: true,
+      }
+      setTouched(nextTouched)
+
+      const validationErrors =
+        mode === 'quick'
+          ? {
+              streetAddress: validateField('streetAddress', nextValues.streetAddress),
+            }
+          : validateForm(nextValues)
+      setErrors(validationErrors)
+
+      const hasError = Object.values(validationErrors).some(Boolean)
+      if (hasError) {
+        return { ok: false, reason: 'validation' }
+      }
+
+      setIsSubmitting(true)
+      setSuccessMessage('')
+      clearUiError()
+
+      try {
+        let appId = application?.id
+        if (!appId) {
+          const created = await createApplication()
+          appId = created?.id
+        }
+
+        if (!appId) {
+          throw new Error('Unable to resolve application id for Step 2 save.')
+        }
+
+        await saveStep({
+          appId,
+          stepNumber: 2,
+          data: {
+            streetAddress: nextValues.streetAddress.trim(),
+            suiteUnit: nextValues.suiteUnit.trim(),
+            city: nextValues.city.trim(),
+            state: nextValues.state,
+            zipCode: nextValues.zipCode.trim(),
+            phone: nextValues.phone.trim(),
+            email: nextValues.email.trim(),
+            websiteUrl: nextValues.websiteUrl.trim(),
+          },
+        })
+
+        setSuccessMessage('Business Address saved.')
+        return { ok: true }
+      } catch (error) {
+        setUiError(error?.message ?? 'Failed to save Business Address.')
+        return { ok: false, reason: 'request' }
+      } finally {
+        setIsSubmitting(false)
+      }
+    },
+    [
+      application?.id,
+      clearUiError,
+      createApplication,
+      formValues,
+      saveStep,
+      setUiError,
+    ],
+  )
+
+  useEffect(() => {
+    if (!registerStepAction) {
+      return undefined
+    }
+    registerStepAction(submitStep)
+    return () => registerStepAction(null)
+  }, [registerStepAction, submitStep])
+
   async function handleSubmit(event) {
     event.preventDefault()
-
-    const nextTouched = {
-      streetAddress: true,
-      city: true,
-      state: true,
-      zipCode: true,
-      phone: true,
-      email: true,
-      websiteUrl: true,
-    }
-    setTouched(nextTouched)
-
-    const validationErrors = validateForm(formValues)
-    setErrors(validationErrors)
-
-    const hasError = Object.values(validationErrors).some(Boolean)
-    if (hasError) {
-      return
-    }
-
-    setIsSubmitting(true)
-    setSuccessMessage('')
-    clearUiError()
-
-    try {
-      let appId = application?.id
-      if (!appId) {
-        const created = await createApplication()
-        appId = created?.id
-      }
-
-      if (!appId) {
-        throw new Error('Unable to resolve application id for Step 2 save.')
-      }
-
-      await saveStep({
-        appId,
-        stepNumber: 2,
-        data: {
-          streetAddress: formValues.streetAddress.trim(),
-          suiteUnit: formValues.suiteUnit.trim(),
-          city: formValues.city.trim(),
-          state: formValues.state,
-          zipCode: formValues.zipCode.trim(),
-          phone: formValues.phone.trim(),
-          email: formValues.email.trim(),
-          websiteUrl: formValues.websiteUrl.trim(),
-        },
-      })
-
-      setSuccessMessage('Business Address saved.')
-    } catch (error) {
-      setUiError(error?.message ?? 'Failed to save Business Address.')
-    } finally {
-      setIsSubmitting(false)
-    }
+    await submitStep({ mode: 'strict' })
   }
 
   return (

@@ -1,5 +1,6 @@
 package com.pranaybank.onboarding.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,6 +33,7 @@ public class BusinessInfo {
      */
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "application_id", nullable = false, unique = true)
+    @JsonIgnore
     private OnboardingApplication application;
 
     // ─── PRD Step 1 Fields ────────────────────────────────────────────────────

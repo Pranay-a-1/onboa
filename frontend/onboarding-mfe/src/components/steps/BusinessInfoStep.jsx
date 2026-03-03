@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useApplication } from '../../hooks/useApplication'
+import { autofillBusinessInfo } from '../../utils/demoAutofill'
 
 const BUSINESS_TYPES = [
   'LLC',
@@ -63,7 +64,7 @@ function validateForm(values) {
   }
 }
 
-function BusinessInfoStep() {
+function BusinessInfoStep({ registerStepAction = null }) {
   const {
     application,
     createApplication,
@@ -146,60 +147,93 @@ function BusinessInfoStep() {
     }))
   }
 
+  const submitStep = useCallback(
+    async ({ mode = 'strict', autofill = false } = {}) => {
+      const nextValues = autofill ? autofillBusinessInfo(formValues) : formValues
+      if (autofill) {
+        setFormValues(nextValues)
+      }
+
+      const nextTouched = {
+        legalName: true,
+        ein: true,
+        businessType: true,
+        stateOfIncorporation: true,
+        dateOfFormation: true,
+      }
+      setTouched(nextTouched)
+
+      const validationErrors =
+        mode === 'quick'
+          ? {
+              legalName: validateField('legalName', nextValues.legalName),
+            }
+          : validateForm(nextValues)
+      setErrors(validationErrors)
+
+      const hasError = Object.values(validationErrors).some(Boolean)
+      if (hasError) {
+        return { ok: false, reason: 'validation' }
+      }
+
+      setIsSubmitting(true)
+      setSuccessMessage('')
+      clearUiError()
+
+      try {
+        let appId = application?.id
+        if (!appId) {
+          const created = await createApplication()
+          appId = created?.id
+        }
+
+        if (!appId) {
+          throw new Error('Unable to resolve application id for Step 1 save.')
+        }
+
+        await saveStep({
+          appId,
+          stepNumber: 1,
+          data: {
+            legalName: nextValues.legalName.trim(),
+            dbaName: nextValues.dbaName.trim(),
+            ein: nextValues.ein.trim(),
+            businessType: nextValues.businessType,
+            stateOfIncorporation: nextValues.stateOfIncorporation,
+            dateOfFormation: nextValues.dateOfFormation,
+          },
+        })
+
+        setSuccessMessage('Business Information saved.')
+        return { ok: true }
+      } catch (error) {
+        setUiError(error?.message ?? 'Failed to save Business Information.')
+        return { ok: false, reason: 'request' }
+      } finally {
+        setIsSubmitting(false)
+      }
+    },
+    [
+      application?.id,
+      clearUiError,
+      createApplication,
+      formValues,
+      saveStep,
+      setUiError,
+    ],
+  )
+
+  useEffect(() => {
+    if (!registerStepAction) {
+      return undefined
+    }
+    registerStepAction(submitStep)
+    return () => registerStepAction(null)
+  }, [registerStepAction, submitStep])
+
   async function handleSubmit(event) {
     event.preventDefault()
-
-    const nextTouched = {
-      legalName: true,
-      ein: true,
-      businessType: true,
-      stateOfIncorporation: true,
-      dateOfFormation: true,
-    }
-    setTouched(nextTouched)
-
-    const validationErrors = validateForm(formValues)
-    setErrors(validationErrors)
-
-    const hasError = Object.values(validationErrors).some(Boolean)
-    if (hasError) {
-      return
-    }
-
-    setIsSubmitting(true)
-    setSuccessMessage('')
-    clearUiError()
-
-    try {
-      let appId = application?.id
-      if (!appId) {
-        const created = await createApplication()
-        appId = created?.id
-      }
-
-      if (!appId) {
-        throw new Error('Unable to resolve application id for Step 1 save.')
-      }
-
-      await saveStep({
-        appId,
-        stepNumber: 1,
-        data: {
-          legalName: formValues.legalName.trim(),
-          dbaName: formValues.dbaName.trim(),
-          ein: formValues.ein.trim(),
-          businessType: formValues.businessType,
-          stateOfIncorporation: formValues.stateOfIncorporation,
-          dateOfFormation: formValues.dateOfFormation,
-        },
-      })
-
-      setSuccessMessage('Business Information saved.')
-    } catch (error) {
-      setUiError(error?.message ?? 'Failed to save Business Information.')
-    } finally {
-      setIsSubmitting(false)
-    }
+    await submitStep({ mode: 'strict' })
   }
 
   return (

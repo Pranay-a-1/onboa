@@ -4,6 +4,7 @@ import com.pranaybank.onboarding.entity.MerchantUser;
 import com.pranaybank.onboarding.repository.MerchantUserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,9 +43,19 @@ public class UserService {
         newUser.setRole(role);
         newUser.setCreatedAt(LocalDateTime.now());
 
-        MerchantUser saved = merchantUserRepository.save(newUser);
-        log.info("Created new MerchantUser id={} for auth0Id={}", saved.getId(), auth0Id);
-        return saved;
+        try {
+            // saveAndFlush forces SQL execution in this try block so unique-key
+            // races are caught here instead of surfacing at transaction commit.
+            MerchantUser saved = merchantUserRepository.saveAndFlush(newUser);
+            log.info("Created new MerchantUser id={} for auth0Id={}", saved.getId(), auth0Id);
+            return saved;
+        } catch (DataIntegrityViolationException conflict) {
+            // Handles concurrent sync calls (common in React StrictMode dev)
+            // where both requests pass the exists-check and one hits the unique key.
+            log.warn("User creation raced for auth0Id={}, returning existing record.", auth0Id);
+            return merchantUserRepository.findByAuth0Id(auth0Id)
+                    .orElseThrow(() -> conflict);
+        }
     }
 
     /**

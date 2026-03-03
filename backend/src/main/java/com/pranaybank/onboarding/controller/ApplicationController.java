@@ -51,9 +51,7 @@ public class ApplicationController {
             HttpServletRequest request) {
 
         String auth0Id = AuthUtil.resolveAuth0Id(jwt, request);
-        return applicationService.getMyApplication(auth0Id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(applicationService.getMyApplication(auth0Id).orElse(null));
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.pranaybank.onboarding.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.pranaybank.onboarding.enums.ApplicationStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -39,6 +40,7 @@ public class OnboardingApplication {
      */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "merchant_user_id", nullable = false)
+    @JsonIgnore
     private MerchantUser merchantUser;
 
     // ─── Status & Step Tracking ───────────────────────────────────────────────

@@ -12,8 +12,9 @@ export default defineConfig({
       // Remote name used by the host when resolving federation modules.
       name: 'onboarding',
 
-      // Keep remote entry path explicit so host URLs stay predictable.
-      filename: 'assets/remoteEntry.js',
+      // Plugin outputs this file under Vite's assets directory automatically.
+      // Using just the filename avoids generating `/assets/assets/remoteEntry.js`.
+      filename: 'remoteEntry.js',
 
       // Expose the remote root component consumed by `onboarding/OnboardingApp`.
       exposes: {

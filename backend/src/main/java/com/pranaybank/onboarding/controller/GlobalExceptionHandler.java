@@ -1,5 +1,6 @@
 package com.pranaybank.onboarding.controller;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -74,7 +75,15 @@ public class GlobalExceptionHandler {
                 ex.getReason() != null ? ex.getReason() : ex.getMessage());
     }
 
-    // ── 6. Catch-all ──────────────────────────────────────────────────────────
+    // ── 6. DataIntegrityViolationException ───────────────────────────────────
+    // Database unique/constraint violations; map to 409 instead of 500.
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleDataIntegrity(
+            DataIntegrityViolationException ex) {
+        return error(HttpStatus.CONFLICT, "Resource conflict.");
+    }
+
+    // ── 7. Catch-all ──────────────────────────────────────────────────────────
     // Any unexpected/unhandled exception becomes a 500 Internal Server Error.
     // We deliberately hide the internal message from the client for security.
     @ExceptionHandler(Exception.class)

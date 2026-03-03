@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useApplication } from '../../hooks/useApplication'
+import { autofillAuthRep } from '../../utils/demoAutofill'
 
 const initialValues = {
   fullName: '',
@@ -96,7 +97,7 @@ function validateForm(values) {
   }
 }
 
-function AuthRepStep() {
+function AuthRepStep({ registerStepAction = null }) {
   const {
     application,
     createApplication,
@@ -182,63 +183,96 @@ function AuthRepStep() {
     }))
   }
 
+  const submitStep = useCallback(
+    async ({ mode = 'strict', autofill = false } = {}) => {
+      const nextValues = autofill ? autofillAuthRep(formValues) : formValues
+      if (autofill) {
+        setFormValues(nextValues)
+      }
+
+      const nextTouched = {
+        fullName: true,
+        title: true,
+        ssnLast4: true,
+        dateOfBirth: true,
+        address: true,
+        phone: true,
+        email: true,
+      }
+      setTouched(nextTouched)
+
+      const validationErrors =
+        mode === 'quick'
+          ? {
+              fullName: validateField('fullName', nextValues.fullName),
+            }
+          : validateForm(nextValues)
+      setErrors(validationErrors)
+
+      const hasError = Object.values(validationErrors).some(Boolean)
+      if (hasError) {
+        return { ok: false, reason: 'validation' }
+      }
+
+      setIsSubmitting(true)
+      setSuccessMessage('')
+      clearUiError()
+
+      try {
+        let appId = application?.id
+        if (!appId) {
+          const created = await createApplication()
+          appId = created?.id
+        }
+
+        if (!appId) {
+          throw new Error('Unable to resolve application id for Step 3 save.')
+        }
+
+        await saveStep({
+          appId,
+          stepNumber: 3,
+          data: {
+            fullName: nextValues.fullName.trim(),
+            title: nextValues.title.trim(),
+            ssnLast4: nextValues.ssnLast4.trim(),
+            dateOfBirth: nextValues.dateOfBirth,
+            address: nextValues.address.trim(),
+            phone: nextValues.phone.trim(),
+            email: nextValues.email.trim(),
+          },
+        })
+
+        setSuccessMessage('Authorized Representative details saved.')
+        return { ok: true }
+      } catch (error) {
+        setUiError(error?.message ?? 'Failed to save Authorized Representative.')
+        return { ok: false, reason: 'request' }
+      } finally {
+        setIsSubmitting(false)
+      }
+    },
+    [
+      application?.id,
+      clearUiError,
+      createApplication,
+      formValues,
+      saveStep,
+      setUiError,
+    ],
+  )
+
+  useEffect(() => {
+    if (!registerStepAction) {
+      return undefined
+    }
+    registerStepAction(submitStep)
+    return () => registerStepAction(null)
+  }, [registerStepAction, submitStep])
+
   async function handleSubmit(event) {
     event.preventDefault()
-
-    const nextTouched = {
-      fullName: true,
-      title: true,
-      ssnLast4: true,
-      dateOfBirth: true,
-      address: true,
-      phone: true,
-      email: true,
-    }
-    setTouched(nextTouched)
-
-    const validationErrors = validateForm(formValues)
-    setErrors(validationErrors)
-
-    const hasError = Object.values(validationErrors).some(Boolean)
-    if (hasError) {
-      return
-    }
-
-    setIsSubmitting(true)
-    setSuccessMessage('')
-    clearUiError()
-
-    try {
-      let appId = application?.id
-      if (!appId) {
-        const created = await createApplication()
-        appId = created?.id
-      }
-
-      if (!appId) {
-        throw new Error('Unable to resolve application id for Step 3 save.')
-      }
-
-      await saveStep({
-        appId,
-        stepNumber: 3,
-        data: {
-          fullName: formValues.fullName.trim(),
-          title: formValues.title.trim(),
-          ssnLast4: formValues.ssnLast4.trim(),
-          dateOfBirth: formValues.dateOfBirth,
-          address: formValues.address.trim(),
-          phone: formValues.phone.trim(),
-          email: formValues.email.trim(),
-        },
-      })
-
-      setSuccessMessage('Authorized Representative details saved.')
-    } catch (error) {
-      setUiError(error?.message ?? 'Failed to save Authorized Representative.')
-    } finally {
-      setIsSubmitting(false)
-    }
+    await submitStep({ mode: 'strict' })
   }
 
   return (

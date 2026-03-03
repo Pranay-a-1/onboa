@@ -5,6 +5,7 @@ import com.pranaybank.onboarding.service.UserService;
 import com.pranaybank.onboarding.util.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -39,7 +40,14 @@ public class UserController {
                         : auth0Id + "@dev.local";
         String role = AuthUtil.resolveRole(jwt, request);
 
-        MerchantUser user = userService.syncUser(auth0Id, email, role);
+        MerchantUser user;
+        try {
+            user = userService.syncUser(auth0Id, email, role);
+        } catch (DataIntegrityViolationException conflict) {
+            // Treat duplicate sync requests as idempotent success.
+            user = userService.getUserByAuth0Id(auth0Id)
+                    .orElseThrow(() -> conflict);
+        }
         return ResponseEntity.ok(user);
     }
 

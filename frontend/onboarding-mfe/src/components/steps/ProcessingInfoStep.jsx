@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useApplication } from '../../hooks/useApplication'
+import { autofillProcessingInfo } from '../../utils/demoAutofill'
 
 const MCC_OPTIONS = [
   { code: '0742', label: 'Veterinary Services' },
@@ -107,7 +108,7 @@ function validateForm(values) {
   }
 }
 
-function ProcessingInfoStep() {
+function ProcessingInfoStep({ registerStepAction = null }) {
   const {
     application,
     createApplication,
@@ -193,56 +194,89 @@ function ProcessingInfoStep() {
     }))
   }
 
+  const submitStep = useCallback(
+    async ({ mode = 'strict', autofill = false } = {}) => {
+      const nextValues = autofill ? autofillProcessingInfo(formValues) : formValues
+      if (autofill) {
+        setFormValues(nextValues)
+      }
+
+      const nextTouched = {
+        monthlyVolume: true,
+        avgTransaction: true,
+        mccCode: true,
+      }
+      setTouched(nextTouched)
+
+      const validationErrors =
+        mode === 'quick'
+          ? {
+              monthlyVolume: validateField('monthlyVolume', nextValues.monthlyVolume),
+            }
+          : validateForm(nextValues)
+      setErrors(validationErrors)
+
+      const hasError = Object.values(validationErrors).some(Boolean)
+      if (hasError) {
+        return { ok: false, reason: 'validation' }
+      }
+
+      setIsSubmitting(true)
+      setSuccessMessage('')
+      clearUiError()
+
+      try {
+        let appId = application?.id
+        if (!appId) {
+          const created = await createApplication()
+          appId = created?.id
+        }
+
+        if (!appId) {
+          throw new Error('Unable to resolve application id for Step 4 save.')
+        }
+
+        await saveStep({
+          appId,
+          stepNumber: 4,
+          data: {
+            monthlyVolume: nextValues.monthlyVolume.trim(),
+            avgTransaction: nextValues.avgTransaction.trim(),
+            mccCode: normalizeMccCode(nextValues.mccCode),
+            currentProcessor: nextValues.currentProcessor.trim(),
+          },
+        })
+
+        setSuccessMessage('Processing Information saved.')
+        return { ok: true }
+      } catch (error) {
+        setUiError(error?.message ?? 'Failed to save Processing Information.')
+        return { ok: false, reason: 'request' }
+      } finally {
+        setIsSubmitting(false)
+      }
+    },
+    [
+      application?.id,
+      clearUiError,
+      createApplication,
+      formValues,
+      saveStep,
+      setUiError,
+    ],
+  )
+
+  useEffect(() => {
+    if (!registerStepAction) {
+      return undefined
+    }
+    registerStepAction(submitStep)
+    return () => registerStepAction(null)
+  }, [registerStepAction, submitStep])
+
   async function handleSubmit(event) {
     event.preventDefault()
-
-    const nextTouched = {
-      monthlyVolume: true,
-      avgTransaction: true,
-      mccCode: true,
-    }
-    setTouched(nextTouched)
-
-    const validationErrors = validateForm(formValues)
-    setErrors(validationErrors)
-
-    const hasError = Object.values(validationErrors).some(Boolean)
-    if (hasError) {
-      return
-    }
-
-    setIsSubmitting(true)
-    setSuccessMessage('')
-    clearUiError()
-
-    try {
-      let appId = application?.id
-      if (!appId) {
-        const created = await createApplication()
-        appId = created?.id
-      }
-
-      if (!appId) {
-        throw new Error('Unable to resolve application id for Step 4 save.')
-      }
-
-      await saveStep({
-        appId,
-        stepNumber: 4,
-        data: {
-          monthlyVolume: formValues.monthlyVolume.trim(),
-          avgTransaction: formValues.avgTransaction.trim(),
-          mccCode: normalizeMccCode(formValues.mccCode),
-          currentProcessor: formValues.currentProcessor.trim(),
-        },
-      })
-
-      setSuccessMessage('Processing Information saved.')
-    } catch (error) {
-      setUiError(error?.message ?? 'Failed to save Processing Information.')
-    } finally {
-      setIsSubmitting(false)
-    }
+    await submitStep({ mode: 'strict' })
   }
 
   return (

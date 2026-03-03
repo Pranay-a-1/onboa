@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useApplication } from '../../hooks/useApplication'
+import { autofillBankAccount } from '../../utils/demoAutofill'
 
 const initialValues = {
   bankName: '',
@@ -52,7 +53,7 @@ function validateForm(values) {
   }
 }
 
-function BankAccountStep() {
+function BankAccountStep({ registerStepAction = null }) {
   const {
     application,
     createApplication,
@@ -161,58 +162,91 @@ function BankAccountStep() {
     }))
   }
 
+  const submitStep = useCallback(
+    async ({ mode = 'strict', autofill = false } = {}) => {
+      const nextValues = autofill ? autofillBankAccount(formValues) : formValues
+      if (autofill) {
+        setFormValues(nextValues)
+      }
+
+      const nextTouched = {
+        bankName: true,
+        routingNumber: true,
+        accountNumber: true,
+        confirmAccountNumber: true,
+        accountType: true,
+      }
+      setTouched(nextTouched)
+
+      const validationErrors =
+        mode === 'quick'
+          ? {
+              bankName: validateField('bankName', nextValues.bankName, nextValues),
+            }
+          : validateForm(nextValues)
+      setErrors(validationErrors)
+
+      const hasError = Object.values(validationErrors).some(Boolean)
+      if (hasError) {
+        return { ok: false, reason: 'validation' }
+      }
+
+      setIsSubmitting(true)
+      setSuccessMessage('')
+      clearUiError()
+
+      try {
+        let appId = application?.id
+        if (!appId) {
+          const created = await createApplication()
+          appId = created?.id
+        }
+
+        if (!appId) {
+          throw new Error('Unable to resolve application id for Step 5 save.')
+        }
+
+        await saveStep({
+          appId,
+          stepNumber: 5,
+          data: {
+            bankName: nextValues.bankName.trim(),
+            routingNumber: nextValues.routingNumber.trim(),
+            accountNumber: nextValues.accountNumber.trim(),
+            accountType: nextValues.accountType,
+          },
+        })
+
+        setSuccessMessage('Bank Account details saved.')
+        return { ok: true }
+      } catch (error) {
+        setUiError(error?.message ?? 'Failed to save Bank Account details.')
+        return { ok: false, reason: 'request' }
+      } finally {
+        setIsSubmitting(false)
+      }
+    },
+    [
+      application?.id,
+      clearUiError,
+      createApplication,
+      formValues,
+      saveStep,
+      setUiError,
+    ],
+  )
+
+  useEffect(() => {
+    if (!registerStepAction) {
+      return undefined
+    }
+    registerStepAction(submitStep)
+    return () => registerStepAction(null)
+  }, [registerStepAction, submitStep])
+
   async function handleSubmit(event) {
     event.preventDefault()
-
-    const nextTouched = {
-      bankName: true,
-      routingNumber: true,
-      accountNumber: true,
-      confirmAccountNumber: true,
-      accountType: true,
-    }
-    setTouched(nextTouched)
-
-    const validationErrors = validateForm(formValues)
-    setErrors(validationErrors)
-
-    const hasError = Object.values(validationErrors).some(Boolean)
-    if (hasError) {
-      return
-    }
-
-    setIsSubmitting(true)
-    setSuccessMessage('')
-    clearUiError()
-
-    try {
-      let appId = application?.id
-      if (!appId) {
-        const created = await createApplication()
-        appId = created?.id
-      }
-
-      if (!appId) {
-        throw new Error('Unable to resolve application id for Step 5 save.')
-      }
-
-      await saveStep({
-        appId,
-        stepNumber: 5,
-        data: {
-          bankName: formValues.bankName.trim(),
-          routingNumber: formValues.routingNumber.trim(),
-          accountNumber: formValues.accountNumber.trim(),
-          accountType: formValues.accountType,
-        },
-      })
-
-      setSuccessMessage('Bank Account details saved.')
-    } catch (error) {
-      setUiError(error?.message ?? 'Failed to save Bank Account details.')
-    } finally {
-      setIsSubmitting(false)
-    }
+    await submitStep({ mode: 'strict' })
   }
 
   return (
