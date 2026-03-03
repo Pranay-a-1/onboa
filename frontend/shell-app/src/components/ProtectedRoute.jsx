@@ -27,10 +27,12 @@ function ProtectedRoute({ children, allowedRoles = [], redirectTo = '/' }) {
   const userRolesKey = userRoles.join('|')
   const normalizedAllowedRolesKey = normalizedAllowedRoles.join('|')
   const normalizedUserRolesKey = normalizedUserRoles.join('|')
-  const hasRoleNormalized =
+  const isAdmin = normalizedUserRoles.includes('admin')
+  const effectiveRoles = isAdmin ? ['admin'] : ['user']
+  const effectiveRolesKey = effectiveRoles.join('|')
+  const hasRole =
     normalizedAllowedRoles.length === 0 ||
-    normalizedAllowedRoles.some((role) => normalizedUserRoles.includes(role))
-  const hasRole = allowedRoles.length === 0 || allowedRoles.some((role) => userRoles.includes(role))
+    normalizedAllowedRoles.some((role) => effectiveRoles.includes(role))
 
   useEffect(() => {
     if (!import.meta.env.DEV || isLoading || !isAuthenticated) return
@@ -42,6 +44,7 @@ function ProtectedRoute({ children, allowedRoles = [], redirectTo = '/' }) {
     const normalizedUserRolesForLog = normalizedUserRolesKey
       ? normalizedUserRolesKey.split('|')
       : []
+    const effectiveRolesForLog = effectiveRolesKey ? effectiveRolesKey.split('|') : []
 
     console.log('[AuthDebug][ProtectedRoute] Guard evaluation', {
       path: window.location.pathname,
@@ -49,18 +52,18 @@ function ProtectedRoute({ children, allowedRoles = [], redirectTo = '/' }) {
       rolesClaimRaw: rolesClaim ?? null,
       normalizedAllowedRoles: normalizedAllowedRolesForLog,
       normalizedUserRoles: normalizedUserRolesForLog,
+      effectiveRoles: effectiveRolesForLog,
       hasRole,
-      hasRoleNormalized,
       unauthorizedRedirectTo: hasRole ? null : redirectTo,
     })
   }, [
     allowedRoles,
+    effectiveRolesKey,
     hasRole,
     isAuthenticated,
     isLoading,
     redirectTo,
     rolesClaim,
-    hasRoleNormalized,
     allowedRolesKey,
     userRolesKey,
     normalizedAllowedRolesKey,

@@ -55,7 +55,8 @@ function App() {
     () => roles.map((role) => String(role).toLowerCase()),
     [roles],
   )
-  const isAdmin = roles.includes('admin')
+  const isAdmin = normalizedRoles.includes('admin')
+  const effectiveRole = isAdmin ? 'admin' : 'user'
 
   useEffect(() => {
     if (!import.meta.env.DEV || !isAuthenticated) return
@@ -65,9 +66,10 @@ function App() {
       rolesClaimRaw: rolesClaim ?? null,
       normalizedRoles,
       isAdmin,
+      effectiveRole,
       rootRedirectTarget: isAdmin ? '/dashboard' : '/onboarding',
     })
-  }, [isAuthenticated, isAdmin, normalizedRoles, rolesClaim, user?.email])
+  }, [effectiveRole, isAuthenticated, isAdmin, normalizedRoles, rolesClaim, user?.email])
 
   // ─── State 1: Auth0 SDK initialising ─────────────────────────────────
   // Auth0 checks the existing session/cookie on every page load.
