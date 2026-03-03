@@ -52,6 +52,12 @@ const darkTheme = createTheme({
 const auth0Config = {
   domain:       import.meta.env.VITE_AUTH0_DOMAIN,
   clientId:     import.meta.env.VITE_AUTH0_CLIENT_ID,
+  cacheLocation: 'localstorage',
+  useRefreshTokens: true,
+  onRedirectCallback: (appState) => {
+    const targetUrl = appState?.returnTo || window.location.pathname || '/'
+    window.history.replaceState({}, document.title, targetUrl)
+  },
   authorizationParams: {
     redirect_uri: window.location.origin,
     // audience tells Auth0 to issue an access token valid for our backend API

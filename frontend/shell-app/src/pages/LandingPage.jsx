@@ -1,5 +1,6 @@
 import { useAuth0 } from '@auth0/auth0-react'
 import { Box, Button, Typography, Grid, Chip } from '@mui/material'
+import { useLocation } from 'react-router-dom'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import VerifiedUserOutlinedIcon from '@mui/icons-material/VerifiedUserOutlined'
 import SpeedOutlinedIcon from '@mui/icons-material/SpeedOutlined'
@@ -21,18 +22,23 @@ import AccountBalanceOutlinedIcon from '@mui/icons-material/AccountBalanceOutlin
  */
 function LandingPage() {
   const { loginWithRedirect } = useAuth0()
+  const location = useLocation()
+  const returnTo = `${location.pathname}${location.search}${location.hash}`
 
   // Auth0 loginWithRedirect() triggers the Universal Login flow.
   // After successful login, Auth0 redirects back to the app and
   // App.jsx's role detection routes the user to the correct MFE.
-  const handleSignIn = () => loginWithRedirect()
+  const handleSignIn = () => loginWithRedirect({ appState: { returnTo } })
 
   // New merchants who don't have an account yet can also use the
   // same Auth0 Universal Login — Auth0 shows both sign-in and sign-up tabs.
   // The 'screen_hint: signup' option pre-selects the registration tab for
   // convenience, reducing friction for new merchant registrations.
   const handleGetStarted = () =>
-    loginWithRedirect({ authorizationParams: { screen_hint: 'signup' } })
+    loginWithRedirect({
+      appState: { returnTo },
+      authorizationParams: { screen_hint: 'signup' },
+    })
 
   return (
     <Box
