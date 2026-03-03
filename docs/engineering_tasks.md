@@ -495,11 +495,11 @@
 
 **Acceptance Criteria**:
 
-- [ ] `npm install && npm run dev` starts on port 3002
-- [ ] `npm run build` generates `remoteEntry.js`
-- [ ] API service methods match admin API contract
-- [ ] Authenticated Axios instance with Bearer token interceptor
-- [ ] QueryClientProvider is configured in `main.jsx` with dashboard stats/list/detail query keys
+- [x] `npm install && npm run dev` starts on port 3002
+- [x] `npm run build` generates `remoteEntry.js`
+- [x] API service methods match admin API contract
+- [x] Authenticated Axios instance with Bearer token interceptor
+- [x] QueryClientProvider is configured in the remote root (`DashboardApp`, mounted from `main.jsx`) with dashboard stats/list/detail query keys
 
 ---
 
@@ -519,10 +519,10 @@
 
 **Acceptance Criteria**:
 
-- [ ] 4 cards render in a responsive grid row
-- [ ] Each card displays correct stat from `GET /api/v1/admin/stats` response
-- [ ] Cards have distinct colors: Total (blue), Pending (yellow), Approved (green), Rejected (red)
-- [ ] Hover animations are smooth
+- [x] 4 cards render in a responsive grid row
+- [x] Each card displays correct stat from `GET /api/v1/admin/stats` response
+- [x] Cards have distinct colors: Total (blue), Pending (yellow), Approved (green), Rejected (red)
+- [x] Hover animations are smooth
 
 ---
 
