@@ -625,7 +625,7 @@
 - Prerequisites (Java 17, Node 18, Auth0 tenant, Neon DB)
 - Local development setup instructions (backend + 3 MFEs)
 - Environment variables reference
-- Auth0 configuration guide
+- Auth0 configuration guide (including admin provisioning model: pre-seeded admins, no admin self-signup)
 - Deployment guide (Vercel + Render)
 - API reference (link to PRD)
 
@@ -634,6 +634,7 @@
 - [ ] Covers local dev setup for all 4 services
 - [ ] Lists all environment variables with descriptions
 - [ ] Auth0 setup section matches PRD Section 11
+- [ ] README explicitly documents admin provisioning: pre-seeded admin accounts in Auth0, no admin self-registration, and super-admin operational ownership
 - [ ] Architecture diagram matches PRD Section 5.1
 - [ ] A developer can clone and run the project following the README
 

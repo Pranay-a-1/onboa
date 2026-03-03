@@ -144,5 +144,10 @@ vite.config.ts.timestamp-*
 
 docs/
 docs/task.md
+docs/engineering_tasks.md
 .agents/
 
+
+
+AGENTS.md
+images/

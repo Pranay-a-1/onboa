@@ -158,6 +158,24 @@ function LandingPage() {
           gets your business processing payments faster than ever.
         </Typography>
 
+        {/* Role intent helper text */}
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{
+            maxWidth: 780,
+            mb: 3.5,
+            px: 2,
+            py: 1.5,
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 2,
+            backgroundColor: 'rgba(17,24,39,0.45)',
+          }}
+        >
+          Admins: use an existing bank-provisioned account via <strong>Sign In</strong>. Merchants:
+          choose <strong>Get Started</strong> to create a new account and begin onboarding.
+        </Typography>
+
         {/* CTA button group */}
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
           {/* Primary CTA: new users */}

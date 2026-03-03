@@ -84,6 +84,7 @@ public class SecurityConfig {
     public SecurityFilterChain devSecurityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
+                .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()))
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
@@ -94,8 +95,8 @@ public class SecurityConfig {
     // PRODUCTION: JWT-enforced filter chain
     // ─────────────────────────────────────────────────────────────────────────
     @Bean
-    @Order(2)
-    @Profile("!dev")
+    @Order(2) // Lower priority than the dev filter chain
+    @Profile("!dev") // Active only when the 'dev' profile is not active
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 // ── CSRF: disabled — this is a stateless REST API, no browser sessions ──

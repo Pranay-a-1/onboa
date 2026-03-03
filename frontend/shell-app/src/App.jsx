@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect, useMemo } from 'react'
 import { useAuth0 } from '@auth0/auth0-react'
 import { Box, CircularProgress, Typography } from '@mui/material'
 import { Routes, Route, Navigate } from 'react-router-dom'
@@ -46,6 +46,28 @@ const DashboardApp = lazy(() => import('dashboard/DashboardApp'))
 
 function App() {
   const { isLoading, isAuthenticated, user } = useAuth0()
+  const rolesClaim = user?.['https://pranaybank.com/roles']
+  const roles = useMemo(
+    () => (Array.isArray(rolesClaim) ? rolesClaim : []),
+    [rolesClaim],
+  )
+  const normalizedRoles = useMemo(
+    () => roles.map((role) => String(role).toLowerCase()),
+    [roles],
+  )
+  const isAdmin = roles.includes('admin')
+
+  useEffect(() => {
+    if (!import.meta.env.DEV || !isAuthenticated) return
+
+    console.log('[AuthDebug][App] Signed-in role evaluation', {
+      email: user?.email ?? null,
+      rolesClaimRaw: rolesClaim ?? null,
+      normalizedRoles,
+      isAdmin,
+      rootRedirectTarget: isAdmin ? '/dashboard' : '/onboarding',
+    })
+  }, [isAuthenticated, isAdmin, normalizedRoles, rolesClaim, user?.email])
 
   // ─── State 1: Auth0 SDK initialising ─────────────────────────────────
   // Auth0 checks the existing session/cookie on every page load.
@@ -86,9 +108,6 @@ function App() {
   // The namespace 'https://pranaybank.com/roles' is required by Auth0 rules —
   // custom claims must be namespaced with a URL to avoid collisions with
   // standard OIDC claims.
-  const roles = user?.['https://pranaybank.com/roles'] ?? []
-  const isAdmin = roles.includes('admin')
-
   return (
     /*
      * .shell-layout — the outermost flex-row defined in index.css
