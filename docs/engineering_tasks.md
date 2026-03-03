@@ -199,7 +199,7 @@
 
 ### TASK-8: Shell App Scaffold & Module Federation Host Config
 
-**Scope**: Create the Vite + React 18 host application with Module Federation configuration.
+**Scope**: Create the Vite + React 19 host application with Module Federation configuration.
 
 **Files**:
 
@@ -210,7 +210,7 @@
 
 **Work**:
 
-- Initialize Vite + React 18 project
+- Initialize Vite + React 19 project
 - Configure `@originjs/vite-plugin-federation` as host, consuming remotes: `onboarding@<URL>/assets/remoteEntry.js`, `dashboard@<URL>/assets/remoteEntry.js`
 - Shared deps: `react`, `react-dom`, `react-router-dom`, `@auth0/auth0-react`
 - Set up Auth0Provider, MUI ThemeProvider (dark theme), BrowserRouter in `main.jsx`
@@ -288,7 +288,7 @@
 
 ### TASK-11: Onboarding MFE Scaffold & API Service
 
-**Scope**: Create the Vite + React 18 remote MFE with Module Federation config and API service layer.
+**Scope**: Create the Vite + React 19 remote MFE with Module Federation config and API service layer.
 
 **Files**:
 
@@ -300,7 +300,7 @@
 
 **Work**:
 
-- Initialize Vite + React 18 project
+- Initialize Vite + React 19 project
 - Module Federation remote config: exposes `./OnboardingApp`
 - Shared deps: `react`, `react-dom`, `react-router-dom`, `@auth0/auth0-react`
 - API service: authenticated Axios instance using `getAccessTokenSilently`, methods for `create`, `getMine`, `getById`, `saveStep`, `submit`
@@ -455,7 +455,7 @@
 
 ### TASK-17: Dashboard MFE Scaffold & API Service
 
-**Scope**: Create the Vite + React 18 remote MFE with Module Federation config and admin API service.
+**Scope**: Create the Vite + React 19 remote MFE with Module Federation config and admin API service.
 
 **Files**:
 
@@ -467,7 +467,7 @@
 
 **Work**:
 
-- Initialize Vite + React 18 project
+- Initialize Vite + React 19 project
 - Module Federation remote config: exposes `./DashboardApp`
 - API service: `getApplications(status?)`, `getApplication(id)`, `updateStatus(id, status, notes)`, `getStats()`
 
