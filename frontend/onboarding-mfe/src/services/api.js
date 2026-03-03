@@ -9,6 +9,7 @@ import axios from 'axios'
  *
  * @param {() => Promise<string>} getAccessTokenSilently Auth0 token getter.
  * @returns {{
+ *   syncUser: () => Promise<any>,
  *   create: () => Promise<any>,
  *   getMine: () => Promise<any>,
  *   getById: (id: string) => Promise<any>,
@@ -46,6 +47,12 @@ export function createApplicationApi(getAccessTokenSilently) {
   })
 
   return {
+    // POST /api/v1/users/sync
+    async syncUser() {
+      const response = await client.post('/users/sync')
+      return response.data
+    },
+
     // POST /api/v1/applications
     async create() {
       const response = await client.post('/applications')
