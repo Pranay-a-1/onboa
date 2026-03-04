@@ -59,6 +59,15 @@ button:hover {
   margin-bottom: 14px;
 }
 
+.onboarding-stepper .MuiStepLabel-label {
+  color: #cbd5e1 !important;
+}
+
+.onboarding-stepper .MuiStepLabel-label.Mui-active,
+.onboarding-stepper .MuiStepLabel-label.Mui-completed {
+  color: #e2e8f0 !important;
+}
+
 .stepper-content > section.card {
   max-width: 100%;
 }
