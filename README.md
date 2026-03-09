@@ -6,12 +6,12 @@
 
 ## 📸 Screenshots
 
-| Landing / Login | Onboarding Stepper | Admin Dashboard |
-|---|---|---|
+| Landing / Login                              | Onboarding Stepper                                         | Admin Dashboard                                |
+| -------------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------- |
 | ![Login](images/Log-in-OnBoa-App-signin.png) | ![Step 1](images/PranayBank-Merchant-Onboarding-step1.png) | ![Admin](images/PranayBank-Merchant-admin.png) |
 
-| Submitted Application | Admin Approve / Reject |
-|---|---|
+| Submitted Application                                                        | Admin Approve / Reject                                                 |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | ![Submitted](images/PranayBank-Merchant-Onboarding-submittedApplication.png) | ![Approve/Reject](images/PranayBank-Merchant-admin_approve_reject.png) |
 
 ---
@@ -19,6 +19,7 @@
 ## ✨ Features
 
 ### Merchant (`USER` role)
+
 - Self-register via Auth0 signup
 - Complete a **6-step onboarding wizard** (Business Info → Address → Authorized Rep → Processing Info → Bank Account → Review & Submit)
 - Auto-save drafts on step navigation; resume where you left off
@@ -27,6 +28,7 @@
 - Edit and resubmit if rejected
 
 ### Bank Admin (`ADMIN` role)
+
 - Pre-seeded accounts (no self-registration)
 - View all applications with filtering by status and date range
 - Quick-stats dashboard: Total / Pending / Approved / Rejected
@@ -67,30 +69,30 @@
 
 ### MFE Apps at a Glance
 
-| App | Type | Dev Port | Responsibilities |
-|---|---|---|---|
-| `shell-app` | Host | **3000** | Layout, routing, Auth0 provider, role-based route guards |
-| `onboarding-mfe` | Remote | **3001** | 6-step stepper form, draft save, client portal |
-| `dashboard-mfe` | Remote | **3002** | Admin dashboard, application list, approve/reject, stats |
+| App              | Type   | Dev Port | Responsibilities                                         |
+| ---------------- | ------ | -------- | -------------------------------------------------------- |
+| `shell-app`      | Host   | **3000** | Layout, routing, Auth0 provider, role-based route guards |
+| `onboarding-mfe` | Remote | **3001** | 6-step stepper form, draft save, client portal           |
+| `dashboard-mfe`  | Remote | **3002** | Admin dashboard, application list, approve/reject, stats |
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend Framework | React 18 |
-| Bundler / MFE | Vite 5 + `@originjs/vite-plugin-federation` |
-| UI Components | MUI (Material UI) v5 |
-| State Management | TanStack Query (server state) + React Context + `useReducer` |
-| HTTP Client | Axios |
-| Auth (Frontend) | `@auth0/auth0-react` |
-| Backend | Spring Boot 3.x (Java 17) |
-| Security | Spring Security + OAuth2 Resource Server (Auth0 JWT) |
-| ORM | Spring Data JPA + Hibernate |
-| Database | Neon PostgreSQL |
-| API Style | REST — `/api/v1/...` |
-| Deployment | Vercel (3 MFEs) + Render.com (backend) + Neon (DB) |
+| Layer              | Technology                                                   |
+| ------------------ | ------------------------------------------------------------ |
+| Frontend Framework | React 18                                                     |
+| Bundler / MFE      | Vite 5 + `@originjs/vite-plugin-federation`                  |
+| UI Components      | MUI (Material UI) v5                                         |
+| State Management   | TanStack Query (server state) + React Context + `useReducer` |
+| HTTP Client        | Axios                                                        |
+| Auth (Frontend)    | `@auth0/auth0-react`                                         |
+| Backend            | Spring Boot 3.x (Java 17)                                    |
+| Security           | Spring Security + OAuth2 Resource Server (Auth0 JWT)         |
+| ORM                | Spring Data JPA + Hibernate                                  |
+| Database           | Neon PostgreSQL                                              |
+| API Style          | REST — `/api/v1/...`                                         |
+| Deployment         | Vercel (3 MFEs) + Render.com (backend) + Neon (DB)           |
 
 ---
 
@@ -116,6 +118,7 @@ cd backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 The API starts on **`http://localhost:8080`**.
 
 Verify:
+
 ```bash
 curl http://localhost:8080/actuator/health
 ```
@@ -167,14 +170,14 @@ VITE_API_BASE_URL=http://localhost:8080/api/v1
 
 ## 🔐 Auth0 Setup
 
-| Setting | Value |
-|---|---|
-| Application Type | Single Page Application (SPA) |
-| Allowed Callback URLs | `http://localhost:3000/callback`, `https://pranaybank.vercel.app/callback` |
-| Allowed Logout URLs | `http://localhost:3000`, `https://pranaybank.vercel.app` |
-| API Identifier (Audience) | `https://pranaybank-api` |
-| Roles | `ADMIN`, `USER` |
-| Custom JWT Claim (Action/Rule) | `https://pranaybank.com/roles` → array of user roles |
+| Setting                        | Value                                                                      |
+| ------------------------------ | -------------------------------------------------------------------------- |
+| Application Type               | Single Page Application (SPA)                                              |
+| Allowed Callback URLs          | `http://localhost:3000/callback`, `https://pranaybank.vercel.app/callback` |
+| Allowed Logout URLs            | `http://localhost:3000`, `https://pranaybank.vercel.app`                   |
+| API Identifier (Audience)      | `https://pranaybank-api`                                                   |
+| Roles                          | `ADMIN`, `USER`                                                            |
+| Custom JWT Claim (Action/Rule) | `https://pranaybank.com/roles` → array of user roles                       |
 
 ### Admin Provisioning
 
@@ -195,13 +198,13 @@ VITE_API_BASE_URL=http://localhost:8080/api/v1
                                       └──► REJECTED ──► DRAFT (re-edit)
 ```
 
-| Status | Description |
-|---|---|
-| `DRAFT` | User is still filling out the form |
-| `SUBMITTED` | Completed and submitted by the merchant |
-| `UNDER_REVIEW` | An admin has started reviewing |
-| `APPROVED` | Approved — a Merchant ID (`PB-XXXXXXXX`) is generated |
-| `REJECTED` | Rejected — user can edit and resubmit |
+| Status         | Description                                           |
+| -------------- | ----------------------------------------------------- |
+| `DRAFT`        | User is still filling out the form                    |
+| `SUBMITTED`    | Completed and submitted by the merchant               |
+| `UNDER_REVIEW` | An admin has started reviewing                        |
+| `APPROVED`     | Approved — a Merchant ID (`PB-XXXXXXXX`) is generated |
+| `REJECTED`     | Rejected — user can edit and resubmit                 |
 
 ---
 
@@ -211,40 +214,40 @@ All endpoints are prefixed with `/api/v1` and require a `Authorization: Bearer <
 
 ### Merchant (USER)
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/applications` | Create a new draft application |
-| `GET` | `/applications/me` | Get current user's application |
-| `PUT` | `/applications/{id}/step/{n}` | Save data for a specific step (1–5) |
-| `POST` | `/applications/{id}/submit` | Submit completed application |
+| Method | Endpoint                      | Description                         |
+| ------ | ----------------------------- | ----------------------------------- |
+| `POST` | `/applications`               | Create a new draft application      |
+| `GET`  | `/applications/me`            | Get current user's application      |
+| `PUT`  | `/applications/{id}/step/{n}` | Save data for a specific step (1–5) |
+| `POST` | `/applications/{id}/submit`   | Submit completed application        |
 
 ### Admin (ADMIN)
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/admin/applications` | List all applications (filterable) |
-| `GET` | `/admin/applications/{id}` | View full application detail |
-| `PUT` | `/admin/applications/{id}/status` | Approve or reject |
-| `GET` | `/admin/stats` | Dashboard quick stats |
+| Method | Endpoint                          | Description                        |
+| ------ | --------------------------------- | ---------------------------------- |
+| `GET`  | `/admin/applications`             | List all applications (filterable) |
+| `GET`  | `/admin/applications/{id}`        | View full application detail       |
+| `PUT`  | `/admin/applications/{id}/status` | Approve or reject                  |
+| `GET`  | `/admin/stats`                    | Dashboard quick stats              |
 
 ### User Management (USER / ADMIN)
 
-| Method | Endpoint | Description |
-|---|---|---|
+| Method | Endpoint      | Description                                |
+| ------ | ------------- | ------------------------------------------ |
 | `POST` | `/users/sync` | Sync Auth0 user to local DB on first login |
-| `GET` | `/users/me` | Get current user profile |
+| `GET`  | `/users/me`   | Get current user profile                   |
 
 ---
 
 ## ☁️ Deployment
 
-| Service | Platform | URL |
-|---|---|---|
-| Shell App | Vercel | `pranaybank.vercel.app` |
-| Onboarding MFE | Vercel | `pranaybank-onboarding.vercel.app` |
-| Dashboard MFE | Vercel | `pranaybank-dashboard.vercel.app` |
-| Backend API | Render.com | `pranaybank-api.onrender.com` |
-| Database | Neon | (connection string via env var) |
+| Service        | Platform   | URL                                |
+| -------------- | ---------- | ---------------------------------- |
+| Shell App      | Vercel     | `pranaybank.vercel.app`            |
+| Onboarding MFE | Vercel     | `pranaybank-onboarding.vercel.app` |
+| Dashboard MFE  | Vercel     | `pranaybank-dashboard.vercel.app`  |
+| Backend API    | Render.com | `pranaybank-api.onrender.com`      |
+| Database       | Neon       | (connection string via env var)    |
 
 > [!NOTE]
 > Render.com free tier has ~30 s cold starts after inactivity. This is expected for a demo environment.
@@ -267,10 +270,6 @@ onboa/
 │   ├── shell-app/             # Host MFE (port 3000)
 │   ├── onboarding-mfe/        # Remote MFE (port 3001)
 │   └── dashboard-mfe/         # Remote MFE (port 3002)
-├── docs/
-│   ├── prd.md                 # Full product requirements
-│   ├── engineering_tasks.md   # Detailed task breakdown
-│   └── implementation_plan.md
 ├── images/                    # App screenshots
 └── README.md
 ```
